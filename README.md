@@ -2,7 +2,7 @@
 
 ## Overview
 
-A simple web application to retrieve a single user's bookmarks from a xBrowserSync backend and provide them as simple web page.
+A simple web application to retrieve a single user's bookmarks from a [xBrowserSync](https://github.com/xbrowsersync/app) backend and provide them as simple web page.
 
 ## Usage
 
