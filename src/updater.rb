@@ -1,4 +1,4 @@
-require 'patron'
+require 'http'
 require 'json'
 require 'time'
 
@@ -39,14 +39,9 @@ module XBookmarkWebClient
     end
 
     def fetch_bookmarks
-      sess = Patron::Session.new
-      sess.base_url = @opts[:api_host]
+      body = HTTP.get(File.join(@opts[:api_host], 'bookmarks', @opts[:user_id])).body
 
-      resp = sess.get("/bookmarks/#{@opts[:user_id]}")
-
-      raise "Error getting bookmark data from #{@opts[:api_host]} - #{resp.status}" if resp.status > 400
-
-      sync_data = JSON.parse(resp.body)
+      sync_data = JSON.parse(body)
       @bookmarks = JSON.parse(XBookmarkWebClient::Crypto.decrypt(@opts[:user_id], @opts[:user_password], sync_data))
       set_timestamp
 

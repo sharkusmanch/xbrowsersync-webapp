@@ -1,4 +1,4 @@
-FROM ruby:2.5
+FROM ruby:2.5-alpine
 
 COPY ./src /bookmarks
 COPY ./docker/nginx_install.sh /tmp/nginx_install.sh
@@ -6,13 +6,14 @@ COPY ./docker/run.sh /tmp/run.sh
 
 WORKDIR /bookmarks
 
-RUN gem install bundler && \
+RUN /bin/ash /tmp/nginx_install.sh && \
+    apk add --no-cache libcurl build-base && \
+    gem install bundler && \
     bundle install && \
-    /bin/bash /tmp/nginx_install.sh && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /www/data && \
-    chown -R www-data:www-data /www/data
+    mkdir /run/nginx
 
 COPY ./docker/bookmarks.conf /etc/nginx/conf.d/bookmarks.conf
 
-CMD [ "/bin/bash", "/tmp/run.sh" ]
+CMD [ "/bin/ash", "/tmp/run.sh" ]
