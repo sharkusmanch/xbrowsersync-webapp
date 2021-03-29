@@ -1,0 +1,28 @@
+<HTML>
+<HEAD>
+  <!-- etc... -->
+</HEAD>
+<BODY>
+  <DIV class='bookmarks'>
+    <% bookmarks.each do |b| %>
+      <header>
+        <h1><%= b['title'] %></h1>
+      </header>
+
+      <% b['children'].each do |bookmark| %>
+        <% if bookmark['children'] %>
+          <header>
+            <h2><%= bookmark['title'] %></h2>
+
+            <% bookmark['children'].each do |subbookmark| %>
+              <p><a href=<%= subbookmark['url'] %>><%= subbookmark['title'] %></a>
+            <% end %>
+          </header>
+        <% else %>
+          <p><a href=<%= bookmark['url'] %>><%= bookmark['title'] %></a>
+        <% end %>
+      <% end %>
+    <% end %>
+  </DIV>
+</BODY>
+</HTML>

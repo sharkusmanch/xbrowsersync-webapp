@@ -1,0 +1,9 @@
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
+
+gem 'lzutf8', '=0.0.1'
+gem 'mixlib-cli'
+gem 'mixlib-log'
+gem 'patron'
+gem 'sinatra'
