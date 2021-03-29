@@ -39,7 +39,10 @@ module XBookmarkWebClient
     end
 
     def fetch_bookmarks
-      body = HTTP.get(File.join(@opts[:api_host], 'bookmarks', @opts[:user_id])).body
+      endpoint = File.join(@opts[:api_host], 'bookmarks', @opts[:user_id])
+      Log.debug("API endpoint: #{endpoint}")
+      body = HTTP.get(endpoint).body
+      Log.debug('Got response from API')
 
       sync_data = JSON.parse(body)
       @bookmarks = JSON.parse(XBookmarkWebClient::Crypto.decrypt(@opts[:user_id], @opts[:user_password], sync_data))
