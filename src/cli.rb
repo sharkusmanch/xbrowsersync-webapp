@@ -1,80 +1,49 @@
-require 'mixlib/cli'
-require 'erb'
+require 'clamp'
 
 require_relative 'updater'
 require_relative 'output'
 
-module XBookmarkWebClient
-  class CLI
-    include Mixlib::CLI
-
-    option :user_id,
-           short: '-u USER_ID',
-           long: '--user-id USER_ID',
-           required: true,
-           description: '32 character user id'
-
-    option :user_password,
-           short: '-p USER_PASSWORD',
-           long: '--user-password USER_PASSWORD',
-           required: true,
-           description: 'Password used to encrypt bookmark data'
-
-    option :interval,
-           short: '-i SECONDS',
-           long: '--interval SECONDS',
-           default: 300,
-           description: 'Seconds to refresh bookmarks from server',
-           proc: proc { |l| l.to_i }
-
-    option :api_host,
-           short: '-h API_HOST',
-           long: '--api-host API_HOST',
-           default: 'https://api.xbrowsersync.org',
-           description: 'xbrowsersync host where the bookmark data is stored'
-
-    option :output_html_file,
-           short: '-o HTML_FILE_OUT',
-           long: '--output-file HTML_FILE_OUT',
-           default: '/tmp/bookmarks.html',
-           description: 'File where HTML bookmarks page will be written'
-
-    option :help,
-           short: '-h',
-           long: '--help',
-           description: 'Show this message',
-           on: :tail,
-           boolean: true,
-           show_options: true,
-           exit: 0
+Clamp do
+  option ["-i", "--interval"], "N", "Seconds to refresh bookmarks from server", environment_variable: 'XBROWSERSYNC_INTERVAL', default: 300 do |s|
+    Integer(s)
   end
-end
 
-XBookmarkWebClient::Log.level(:debug)
+  option ["-H", "--api-host"], "HOST", "xbrowsersync API host", environment_variable: 'XBROWSERSYNC_API_HOST', default: 'https://api.xbrowsersync.org'
 
-cli = XBookmarkWebClient::CLI.new
-cli.parse_options
+  option ["-u", "--user-id"], "HOST", "xbrowsersync user id", environment_variable: 'XBROWSERSYNC_USER_ID' do |s|
+    raise ArgumentError.new('User ID must be 32 characters') unless s.length == 32
+    s
+  end
 
-updater = XBookmarkWebClient::Updater.new(
-  api_host: cli.config[:api_host],
-  interval: cli.config[:interval],
-  user_id: cli.config[:user_id],
-  user_password: cli.config[:user_password]
-)
+  option ["-p", "--user-password"], "HOST", "xbrowsersync user password", environment_variable: 'XBROWSERSYNC_USER_PASSWORD'
 
-XBookmarkWebClient::Log.debug('Starting updater thread...')
-updater_thread = Thread.new do
-  updater.start
-end
-XBookmarkWebClient::Log.debug('Started updater thread...')
+  option ["-o", "--output-html-file"], "FILE_PATH", "Path where HTML output file will be written", environment_variable: 'XBROWSERSYNC_OUTPUT_HTML_FILE', default: '/tmp/bookmarks.html'
 
-output = XBookmarkWebClient::Output::HTMLOutput.new(cli.config[:output_html_file])
+  def execute
+    XBookmarkWebClient::Log.level(:debug)
 
-last_updated = 0
+    updater = XBookmarkWebClient::Updater.new(
+      api_host: api_host,
+      interval: interval,
+      user_id: user_id,
+      user_password: user_password
+    )
 
-while true
-  output.output(updater.bookmarks)
-  sleep 1 until last_updated < updater.last_updated
-  last_updated = updater.last_updated
-  XBookmarkWebClient::Log.debug('Updated output')
+    XBookmarkWebClient::Log.debug('Starting updater thread...')
+    updater_thread = Thread.new do
+      updater.start
+    end
+    XBookmarkWebClient::Log.debug('Started updater thread...')
+
+    output = XBookmarkWebClient::Output::HTMLOutput.new(output_html_file)
+
+    last_updated = 0
+
+    while true
+      output.output(updater.bookmarks)
+      sleep 1 until last_updated < updater.last_updated
+      last_updated = updater.last_updated
+      XBookmarkWebClient::Log.debug('Updated output')
+    end
+  end
 end
